@@ -20,3 +20,4 @@ class SplashScrapyAmazonItem(scrapy.Item):
     size_name = scrapy.Field()
     size_id = scrapy.Field()
     content = scrapy.Field()
+    image = scrapy.Field()

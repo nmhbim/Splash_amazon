@@ -2,22 +2,27 @@
 import scrapy
 from scrapy_splash import SplashRequest
 from Splash_scrapy_amazon.items import SplashScrapyAmazonItem
+import re
 
 class AmazonTeeSpider(scrapy.Spider):
     name = 'amazon_tee'
     #allowed_domains = ['https://www.amazon.com']
     #start_urls = ['https://www.amazon.com/Mommy-Birthday-Princess-Unicorn-Outfit/dp/B07PGBWYQ1/ref=sr_1_2']
     
-    script = """
+    script1 = """
         function main(splash, args)
             splash.images_enabled = false
             assert(splash:go(args.url))
             assert(splash:wait(0.5))
-            kq = args.fit_id
-            
+            fit = args.fit_id
+            size = args.size_id
+            color = args.color_id
+
+
             return{
-                kq = kq,
-                xida = kq
+                fit = fit,
+                size = size,
+                color = color
             }
         end
     """
@@ -37,7 +42,7 @@ class AmazonTeeSpider(scrapy.Spider):
         for raw_product_url in raw_product_urls:
             product_urls.append("https://www.amazon.com{}".format(raw_product_url))
         for product_url in product_urls:
-            yield SplashRequest(url= product_url, callback=self.parse_level_1, endpoint='render.html')
+            yield scrapy.Request(url= product_url, callback=self.parse_level_1)
         
     def parse_level_1(self, response):
         ketqua = SplashScrapyAmazonItem()
@@ -73,16 +78,24 @@ class AmazonTeeSpider(scrapy.Spider):
         # class="a-dropdown-item dropdownUnavailable"
         # class ="swatchUnavailable"
         # class="swatchAvailable"
-        print(response.request.url)
-
-    #     yield SplashRequest(url=response.request.url, endpoint='execute', args={
-    #         'lua_source': self.script,
-    #         'fit_id': ketqua['fit_id'],
-    #         # 'ketqua['color_id']': ketqua['color_id'],
-    #         # 'variant_size_id': variant_size_id,
-    #     }, callback=self.parse_level_2)
+        raw_price = response.xpath('//*[@id="priceblock_ourprice"]/text()').extract_first()
+        re_raw_price = re.search(" - ", raw_price)
+        if not re_raw_price and not ketqua['fit_id'] and not ketqua['color_id']:
+            image_raw =  response.xpath('//*[@id="altImages"]/ul/li[contains(@class, "a-spacing-small item imageThumbnail")]//img/@src').extract()
+            for i in image_raw:
+                ketqua['image'].append(i.replace('_SR38,50_', '_UL1050_'))
+            
+        yield SplashRequest(url=response.url, endpoint='execute', args={
+            'lua_source': self.script1,
+            'fit_id': ketqua['fit_id'],
+            'color_id':ketqua['color_id'],
+            'size_id': ketqua['size_id']
+            # 'ketqua['color_id']': ketqua['color_id'],
+            # 'variant_size_id': variant_size_id,
+        }, callback=self.parse_level_2)
     # # def parse(self, response):
 
     # #     print(response.body_as_unicode())
-    # def parse_level_2(self, response):
-    #     yield response.body_as_unicode()
+    def parse_level_2(self, response):
+        print ("________________________________________________________")
+        print(response.body_as_unicode())

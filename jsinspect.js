@@ -56,7 +56,7 @@ function () {
 
 
 function main(splash, args)
-  splash.images_enabled = false
+ splash.images_enabled = false
  assert(splash:go(args.url))
  assert(splash:wait(0.5))
  sizeid = {
@@ -100,3 +100,4 @@ function main(splash, args)
     har = splash:har()
   }
 end
+"//script[contains(text(), 'register(\"ImageBlockATF\"')]/text()"

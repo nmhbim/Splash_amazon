@@ -1,4 +1,5 @@
 import itertools
+import re
 
 sizeid = [
 '#size_name_0',
@@ -22,14 +23,15 @@ colorid = [
 '#color_name_8',
 ]
 
-fitid = [
-'#fit_name_0',
-'#fit_name_1',
-'#fit_name_2',
-'#fit_name_3',
-]
 
-args = [fitid, colorid, sizeid]
 
-for commm in itertools.product(*args):
-    print(commm)
+args = {"fit":"skdfsdf", "color": colorid, "size": sizeid}
+# for commm in itertools.product(*args):
+#     print(commm)
+# string = '$19.99 - $23.99'
+string = 'https://images-na.ssl-images-amazon.com/images/I/613bYnipaZL._SR38,50_.jpg'
+# string = "The rain in Spain"
+x= string.replace('_SR38,50_', '_UL1050_')
+args['fit'].append(string)
+
+print(args) #this will print an object
