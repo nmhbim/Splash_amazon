@@ -59,6 +59,8 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy_splash.SplashCookiesMiddleware': 723,
     'scrapy_splash.SplashMiddleware': 725,
     'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'Splash_scrapy_amazon.middlewares.UserAgentRotatorMiddleware':400
 }
 
 # Enable or disable extensions
