@@ -118,22 +118,34 @@ class AmazonTeeSpider(scrapy.Spider):
             })
 
         elif re_raw_price and not size_id:
-            #giá thay đổi theo size và màu sắc và fit
+            #giá thay doi theo màu sắc và fit
             yield SplashRequest(url=response.url, endpoint='execute', args={
-            'lua_source': self.script2,
-            'attribute': zip_att,
-            }, callback=self.parse_level_2)    
-                  
-    script2 = """
+                'lua_source': self.script2,
+                'attribute': zip_att,
+            }, callback=self.parse_level_2_1)
+        elif re_raw_price and (fit_id or color_id) and size_id:
+            #gia thay doi theo mau sac size va fit
+            yield SplashRequest(url=response.url, endpoint='execute', args={
+                'lua_source': self.script3,
+                'attribute': zip_att,
+                'size': size_id
+            }, callback=self.parse_level_2_2)
+        else:
+            yield SplashRequest(url=response.url, endpoint='execute', args={
+                'lua_source': self.script4,
+                'size': size_id
+            }, callback=self.parse_level_2_2)
+    script3 = """
         function main(splash, args)
-        assert(splash:go(args.url))
-        assert(splash:wait(0.5))
-        atts = args.attribute
-        for key, val in atts do
-            flag = false
-            for att_key, att_val in val do
+            assert(splash:go(args.url))
+            assert(splash:wait(0.5))
+            atts = args.attribute
+            size = args.size
+            for key, val in atts do
+                flag = false
+                for att_key, att_val in val do
                 if att_key == 'fit' and splash:select("#"..att_val..".swatchAvailable") then
-                    local att1 = splash:select("#"..att_val)
+                        local att1 = splash:select("#"..att_val)
                     assert(att1:mouse_click())
                     assert(splash:wait(0.25))
                     flag = true
@@ -144,19 +156,73 @@ class AmazonTeeSpider(scrapy.Spider):
                     flag = true
                 else break
                 end
-            if flag == true then
-                img_list = splash:select_all('.a-spacing-small.item.imageThumbnail.a-declarative > span > span > span > span >img')
-                img = {}
-                for key, val in ipairs(img_list) do
+                if flag == true then
+                    img_list = splash:select_all('.a-spacing-small.item.imageThumbnail.a-declarative > span > span > span > span >img')
+                    img = {}
+                    for key, val in ipairs(img_list) do
                     table.insert(img, val:getAttribute("src"))
+                    end
+                    for size_key, size_value in size do
+                    att01 = splash:select("#dropdown_selected_size_name")
+                            assert(att01:mouse_click())
+                            assert(splash:wait(0.25))
+                            att1 = splash:select("#size_name_0")
+                            assert(att1:mouse_click())
+                            assert(splash:wait(1))
+                            price = splash:select("#priceblock_ourprice")
+                                pr1 = price:text()
+                    end
+                end
+                end    
+            end
+            
+            return {
+                html = splash:html(),
+                png = splash:png(),
+                har = splash:har(),
+            }
+            end
+    """
+                  
+    script2 = """
+        function main(splash, args)
+            assert(splash:go(args.url))
+            assert(splash:wait(0.5))
+            atts = args.attribute
+            local products = {}
+            for key, val in atts do
+                local product = {}
+                flag = false
+                for att_key, att_val in val do
+                    if att_key == 'fit' and splash:select("#"..att_val..".swatchAvailable") then
+                        local att1 = splash:select("#"..att_val)
+                        assert(att1:mouse_click())
+                        assert(splash:wait(0.25))
+                        flag = true
+                    elseif att_key == 'color' and splash:select("#"..att_val..".swatchAvailable") then
+                        local att1 = splash:select("#"..att_val)
+                        assert(att1:mouse_click())
+                        assert(splash:wait(0.25))
+                        flag = true
+                    else break
+                    end
+                if flag == true then
+                    img_list = splash:select_all('.a-spacing-small.item.imageThumbnail.a-declarative > span > span > span > span >img')
+                    img = {}
+                    for key, val in ipairs(img_list) do
+                        table.insert(img, val:getAttribute("src"))
+                    end
+                    price = splash:select("#priceblock_ourprice"):text()
                 end
             end
-        end
-        return {
-            img = img
-        }
+            return {
+                
+            }
         end
     """
     # #     print(response.body_as_unicode())
-    def parse_level_2(self, response):
+    def parse_level_2_1(self, response):
         yield response.body_as_unicode()
+
+    def parse_level_2_2(self, response):
+        pass
